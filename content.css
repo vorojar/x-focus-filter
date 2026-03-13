@@ -1,5 +1,11 @@
 /* X Focus Filter - Content Styles v1.1 (Warm) */
 
+/* Hide unprocessed tweets instantly to prevent flash */
+article[data-testid="tweet"]:not([data-xfilter-processed]) {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
 /* Hidden tweets - smooth collapse */
 .xfilter-hidden {
   opacity: 0 !important;
@@ -42,9 +48,10 @@
   letter-spacing: 0.02em;
 }
 
-/* Visible tweets */
+/* Visible tweets - fade in after processing */
 .xfilter-visible {
-  transition: opacity 0.2s ease;
+  opacity: 1 !important;
+  transition: opacity 0.15s ease;
 }
 
 /* ========================================

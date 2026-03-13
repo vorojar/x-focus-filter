@@ -426,22 +426,39 @@
   // MUTATION OBSERVER
   // =========================================================================
 
+  function processNewTweets(nodes) {
+    let count = 0;
+    for (const node of nodes) {
+      if (node.nodeType !== 1) continue;
+      if (node.matches?.(TWEET_SELECTOR)) {
+        if (!node.getAttribute(PROCESSED_ATTR)) { processTweet(node); count++; }
+      } else {
+        const articles = node.querySelectorAll?.(TWEET_SELECTOR + `:not([${PROCESSED_ATTR}])`);
+        if (articles) articles.forEach(a => { processTweet(a); count++; });
+      }
+    }
+    if (count > 0) updateBadge();
+  }
+
   function startObserver() {
+    let pending = [];
+    let rafId = null;
+
+    const flush = () => {
+      rafId = null;
+      const nodes = pending;
+      pending = [];
+      processNewTweets(nodes);
+    };
+
     const observer = new MutationObserver((mutations) => {
-      let hasNew = false;
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1) {
-            if (node.matches?.(TWEET_SELECTOR) || node.querySelector?.(TWEET_SELECTOR)) {
-              hasNew = true; break;
-            }
-          }
+          if (node.nodeType === 1) pending.push(node);
         }
-        if (hasNew) break;
       }
-      if (hasNew) {
-        clearTimeout(startObserver._timer);
-        startObserver._timer = setTimeout(processAllTweets, 150);
+      if (pending.length > 0 && !rafId) {
+        rafId = requestAnimationFrame(flush);
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
