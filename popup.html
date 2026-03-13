@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #fcf9f5;
+      --bg-card: rgba(160, 120, 60, 0.06);
+      --bg-card-hover: rgba(160, 120, 60, 0.12);
+      --bg-input: rgba(160, 120, 60, 0.06);
+      --border: rgba(140, 110, 60, 0.12);
+      --text: #4a3d30;
+      --text-dim: #8a7d6e;
+      --accent: #b07028;
+      --accent-light: rgba(176, 112, 40, 0.12);
+      --green: #6a8a3a;
+      --red: #a84a30;
+      --gold: #9a7a2a;
+      --toggle-bg: #d8cfc2;
+      --toggle-on: #b07028;
+    }
+
+    body {
+      width: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-icon {
+      width: 26px; height: 26px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+    .logo-text { font-size: 15px; font-weight: 700; color: var(--text); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    /* ── Toggle ── */
+    .toggle-switch { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--toggle-bg); border-radius: 10px; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: transform 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--toggle-on); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    /* ── Language ── */
+    .lang-switch { display: flex; gap: 1px; }
+    .lang-btn {
+      padding: 2px 7px; font-size: 10px; font-weight: 600; background: none; border: none;
+      border-radius: 4px; color: var(--text-dim); cursor: pointer;
+    }
+    .lang-btn.active { background: var(--accent-light); color: var(--accent); }
+
+    /* ── Stats ── */
+    .stats-bar { display: flex; border-bottom: 1px solid var(--border); }
+    .stat {
+      flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 4px;
+      padding: 8px 0;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: 10px; color: var(--text-dim); }
+    .stat-num.scanned { color: var(--gold); }
+    .stat-num.shown { color: var(--green); }
+    .stat-num.hidden { color: var(--red); }
+
+    /* ── Mode bar ── */
+    .mode-bar { display: flex; padding: 8px 16px; gap: 6px; border-bottom: 1px solid var(--border); }
+    .mode-btn {
+      flex: 1; padding: 5px 0; background: none; border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text-dim); font-size: 11px; font-weight: 500;
+      cursor: pointer; text-align: center;
+    }
+    .mode-btn:hover { background: var(--bg-card); }
+    .mode-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+    /* ── Section ── */
+    .section { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .section:last-child { border-bottom: none; }
+    .section-title {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 8px;
+    }
+
+    /* ── Categories (chip layout) ── */
+    .category-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .category-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 20px; cursor: pointer;
+      background: var(--bg-card); border: 1px solid var(--border);
+      font-size: 12px; color: var(--text-dim); transition: all 0.15s;
+      user-select: none;
+    }
+    .category-chip:hover { background: var(--bg-card-hover); }
+    .category-chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .category-chip input { display: none; }
+    .category-emoji { font-size: 13px; }
+    .category-meta, .category-desc, .kw-badge { display: none; }
+
+    /* ── Inputs ── */
+    .input-group { margin-top: 8px; }
+    .input-group:first-of-type { margin-top: 0; }
+    .input-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+    input[type="text"] {
+      width: 100%; padding: 7px 10px;
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 12px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--text-dim); font-family: inherit; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 6px; margin-top: 10px; }
+    .save-btn {
+      flex: 1; padding: 7px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+    .save-btn:hover { opacity: 0.85; }
+    .save-btn:active { transform: scale(0.98); }
+    .save-btn.saved { background: var(--green); }
+    .peek-btn {
+      padding: 7px 12px; background: none; color: var(--text-dim);
+      border: 1px solid var(--border); border-radius: 8px; font-size: 12px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .peek-btn:hover { background: var(--bg-card); color: var(--text); }
+    .peek-btn.active { border-color: var(--red); color: var(--red); }
+
+    /* ── Footer ── */
+    .footer { padding: 8px 16px; text-align: center; font-size: 10px; color: var(--text-dim); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">X Focus Filter</span>
+    </div>
+    <div class="header-right">
+      <div class="lang-switch">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="masterToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-num scanned" id="statTotal">0</span>
+      <span class="stat-label" data-i18n="stat_scanned"></span>
+    </div>
+    <div class="stat">
+      <span class="stat-num shown" id="statShown">0</span>
+      <span class="stat-label" data-i18n="stat_shown"></span>
+    </div>
+    <div class="stat">
+      <span class="stat-num hidden" id="statHidden">0</span>
+      <span class="stat-label" data-i18n="stat_hidden"></span>
+    </div>
+  </div>
+
+  <div class="mode-bar">
+    <button class="mode-btn" data-mode="strict" data-i18n="mode_strict"></button>
+    <button class="mode-btn active" data-mode="normal" data-i18n="mode_normal"></button>
+    <button class="mode-btn" data-mode="relaxed" data-i18n="mode_relaxed"></button>
+  </div>
+
+  <div class="section">
+    <div class="section-title" data-i18n="section_topics"></div>
+    <div class="category-list">
+      <label class="category-chip active"><input type="checkbox" data-category="tech" checked><span class="category-emoji">💻</span><span data-i18n="cat_tech"></span></label>
+      <label class="category-chip active"><input type="checkbox" data-category="ai" checked><span class="category-emoji">🤖</span><span data-i18n="cat_ai"></span></label>
+      <label class="category-chip active"><input type="checkbox" data-category="business" checked><span class="category-emoji">📈</span><span data-i18n="cat_biz"></span></label>
+      <label class="category-chip active"><input type="checkbox" data-category="opensource" checked><span class="category-emoji">🔓</span><span data-i18n="cat_oss"></span></label>
+      <label class="category-chip"><input type="checkbox" data-category="design"><span class="category-emoji">🎨</span><span data-i18n="cat_design"></span></label>
+      <label class="category-chip"><input type="checkbox" data-category="crypto"><span class="category-emoji">🪙</span><span data-i18n="cat_crypto"></span></label>
+      <label class="category-chip"><input type="checkbox" data-category="indie"><span class="category-emoji">🚀</span><span data-i18n="cat_indie"></span></label>
+      <label class="category-chip"><input type="checkbox" data-category="career"><span class="category-emoji">💼</span><span data-i18n="cat_career"></span></label>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" data-i18n="section_custom"></div>
+    <div class="input-group">
+      <div class="input-label" data-i18n="label_whitelist"></div>
+      <input type="text" id="customWhitelist" data-i18n-ph="ph_whitelist">
+    </div>
+    <div class="input-group">
+      <div class="input-label" data-i18n="label_blacklist"></div>
+      <input type="text" id="customBlacklist" data-i18n-ph="ph_blacklist">
+    </div>
+    <div class="input-group">
+      <div class="input-label" data-i18n="label_users"></div>
+      <input type="text" id="whitelistedUsers" data-i18n-ph="ph_users">
+    </div>
+    <div class="btn-row">
+      <button class="save-btn" id="saveBtn" data-i18n="btn_save"></button>
+      <button class="peek-btn" id="peekBtn" data-i18n="btn_peek"></button>
+    </div>
+  </div>
+
+  <div class="footer">v1.1 · <span data-i18n="footer"></span></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
