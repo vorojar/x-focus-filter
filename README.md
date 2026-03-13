@@ -77,7 +77,7 @@ Tweet loads → Keyword matching → Show or Hide
 
 ## Screenshot
 
-<img src="https://raw.githubusercontent.com/vorojar/x-focus-filter/main/screenshots/popup.png" width="340" alt="X Focus Filter popup interface" />
+<img src="./screenshots/popup.png" width="340" alt="X Focus Filter popup interface" />
 
 ## How the Keyword Matching Works
 
