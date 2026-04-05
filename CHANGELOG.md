@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.0] - 2026-04-05
+
+### Added
+- **视频下载按钮** — 视频右下角悬停显示下载按钮，点击直接下载最高画质 mp4
+- 通过拦截 Twitter API 响应自动捕获视频 URL，支持时间线和推文详情页
+- 下载状态反馈：加载动画 + 完成提示
+
+### Changed
+- `host_permissions` 新增 `video.twimg.com` 用于视频下载
+- Version bumped to 1.3.0
+
 ## [1.2.0] - 2026-03-22
 
 ### Added

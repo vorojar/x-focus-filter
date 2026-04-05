@@ -1,4 +1,4 @@
-// X Focus Filter - Content Script v1.2
+// X Focus Filter - Content Script v1.3
 // Filters timeline to show only Tech/AI/Business/Open Source content
 
 (function () {
@@ -497,6 +497,7 @@
       }
     }
     if (count > 0) updateBadge();
+    addDownloadButtons();
   }
 
   function startObserver() {
@@ -524,15 +525,160 @@
   }
 
   // =========================================================================
+  // VIDEO DOWNLOAD
+  // =========================================================================
+
+  const videoUrlMap = new Map(); // tweetId -> mp4 url
+  const VIDEO_BTN_ATTR = 'data-xfilter-dl';
+
+  // Inject page-level script to intercept fetch and capture video URLs
+  function injectVideoInterceptor() {
+    const script = document.createElement('script');
+    script.textContent = `
+(function() {
+  var origFetch = window.fetch;
+  window.fetch = function() {
+    var args = arguments;
+    var url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url);
+    var result = origFetch.apply(this, args);
+    if (url && (url.includes('/TweetDetail') || url.includes('Timeline') || url.includes('/TweetResultByRestId'))) {
+      result.then(function(resp) {
+        var clone = resp.clone();
+        clone.json().then(function(data) {
+          var videos = [];
+          function dig(obj, depth) {
+            if (depth > 25 || !obj || typeof obj !== 'object') return;
+            if (obj.rest_id && obj.legacy && obj.legacy.extended_entities && obj.legacy.extended_entities.media) {
+              var media = obj.legacy.extended_entities.media;
+              for (var i = 0; i < media.length; i++) {
+                var vi = media[i].video_info;
+                if (vi && vi.variants) {
+                  var mp4s = vi.variants.filter(function(v) { return v.content_type === 'video/mp4'; });
+                  mp4s.sort(function(a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
+                  if (mp4s.length > 0) {
+                    videos.push({ tweetId: obj.rest_id, url: mp4s[0].url });
+                  }
+                }
+              }
+            }
+            var keys = Object.keys(obj);
+            for (var k = 0; k < keys.length; k++) {
+              if (typeof obj[keys[k]] === 'object') dig(obj[keys[k]], depth + 1);
+            }
+          }
+          dig(data, 0);
+          if (videos.length > 0) {
+            window.postMessage({ type: '__xfilter_videos__', videos: videos }, '*');
+          }
+        }).catch(function() {});
+      }).catch(function() {});
+    }
+    return result;
+  };
+})();
+`;
+    document.documentElement.appendChild(script);
+    script.remove();
+  }
+
+  // Listen for video URLs from the page script
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === '__xfilter_videos__') {
+      for (const v of event.data.videos) {
+        videoUrlMap.set(v.tweetId, v.url);
+      }
+      addDownloadButtons();
+    }
+  });
+
+  function getTweetId(article) {
+    const links = article.querySelectorAll('a[href*="/status/"]');
+    for (const link of links) {
+      const match = link.href.match(/\/status\/(\d+)/);
+      if (match) return match[1];
+    }
+    return null;
+  }
+
+  function addDownloadButtons() {
+    const players = document.querySelectorAll('[data-testid="videoPlayer"]');
+    for (const player of players) {
+      if (player.querySelector(`[${VIDEO_BTN_ATTR}]`)) continue;
+
+      const article = player.closest('article[data-testid="tweet"]');
+      if (!article) continue;
+
+      const tweetId = getTweetId(article);
+      if (!tweetId || !videoUrlMap.has(tweetId)) continue;
+
+      const container = player.closest('[data-testid="videoComponent"]') || player;
+      if (getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
+      }
+
+      const btn = document.createElement('button');
+      btn.setAttribute(VIDEO_BTN_ATTR, tweetId);
+      btn.className = 'xfilter-dl-btn';
+      btn.title = '下载视频';
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        downloadVideo(tweetId);
+      });
+      container.appendChild(btn);
+    }
+  }
+
+  async function downloadVideo(tweetId) {
+    const url = videoUrlMap.get(tweetId);
+    if (!url) return;
+
+    const btn = document.querySelector(`[${VIDEO_BTN_ATTR}="${tweetId}"]`);
+    if (btn) {
+      btn.classList.add('xfilter-dl-loading');
+      btn.title = '下载中...';
+    }
+
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `x_video_${tweetId}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      if (btn) {
+        btn.classList.remove('xfilter-dl-loading');
+        btn.classList.add('xfilter-dl-done');
+        btn.title = '下载完成';
+        setTimeout(() => btn.classList.remove('xfilter-dl-done'), 2000);
+      }
+    } catch (err) {
+      console.error('[X Focus Filter] Video download failed:', err);
+      if (btn) {
+        btn.classList.remove('xfilter-dl-loading');
+        btn.title = '下载失败，点击重试';
+      }
+      window.open(url, '_blank');
+    }
+  }
+
+  // =========================================================================
   // INIT
   // =========================================================================
 
   async function init() {
     await loadConfig();
+    injectVideoInterceptor();
     createBadge();
     processAllTweets();
+    addDownloadButtons();
     startObserver();
-    console.log('[X Focus Filter] v1.2 Initialized ✓');
+    console.log('[X Focus Filter] v1.3 Initialized ✓');
   }
 
   if (document.readyState === 'loading') {
