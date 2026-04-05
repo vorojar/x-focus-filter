@@ -4,11 +4,13 @@
 
 ### Added
 - **视频下载按钮** — 视频右下角悬停显示下载按钮，点击直接下载最高画质 mp4
+- **图片下载按钮** — 图片右下角悬停显示下载按钮，自动获取原图质量（`name=orig`）
 - 通过拦截 Twitter API 响应自动捕获视频 URL，支持时间线和推文详情页
+- 多图推文支持逐张下载，文件名自动编号
 - 下载状态反馈：加载动画 + 完成提示
 
 ### Changed
-- `host_permissions` 新增 `video.twimg.com` 用于视频下载
+- `host_permissions` 新增 `video.twimg.com` 和 `pbs.twimg.com`
 - Version bumped to 1.3.0
 
 ## [1.2.0] - 2026-03-22

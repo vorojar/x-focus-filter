@@ -525,11 +525,12 @@
   }
 
   // =========================================================================
-  // VIDEO DOWNLOAD
+  // MEDIA DOWNLOAD (VIDEO + IMAGE)
   // =========================================================================
 
   const videoUrlMap = new Map(); // tweetId -> mp4 url
-  const VIDEO_BTN_ATTR = 'data-xfilter-dl';
+  const DL_BTN_ATTR = 'data-xfilter-dl';
+  const DL_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
 
   // Listen for video URLs from the MAIN world interceptor (video-interceptor.js)
   window.addEventListener('message', (event) => {
@@ -550,10 +551,24 @@
     return null;
   }
 
+  function createDlBtn(title, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'xfilter-dl-btn';
+    btn.title = title;
+    btn.innerHTML = DL_SVG;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick(btn);
+    });
+    return btn;
+  }
+
   function addDownloadButtons() {
+    // --- Video buttons ---
     const players = document.querySelectorAll('[data-testid="videoPlayer"]');
     for (const player of players) {
-      if (player.querySelector(`[${VIDEO_BTN_ATTR}]`)) continue;
+      if (player.querySelector(`[${DL_BTN_ATTR}]`)) continue;
 
       const article = player.closest('article[data-testid="tweet"]');
       if (!article) continue;
@@ -566,25 +581,56 @@
         container.style.position = 'relative';
       }
 
-      const btn = document.createElement('button');
-      btn.setAttribute(VIDEO_BTN_ATTR, tweetId);
-      btn.className = 'xfilter-dl-btn';
-      btn.title = '下载视频';
-      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        downloadVideo(tweetId);
-      });
+      const btn = createDlBtn('下载视频', (b) => downloadMedia(videoUrlMap.get(tweetId), `x_video_${tweetId}.mp4`, b));
+      btn.setAttribute(DL_BTN_ATTR, 'video');
       container.appendChild(btn);
+    }
+
+    // --- Image buttons ---
+    const photos = document.querySelectorAll('[data-testid="tweetPhoto"]');
+    for (const photo of photos) {
+      if (photo.querySelector(`[${DL_BTN_ATTR}]`)) continue;
+
+      const img = photo.querySelector('img[src*="pbs.twimg.com/media"]');
+      if (!img) continue;
+
+      const article = photo.closest('article[data-testid="tweet"]');
+      const tweetId = article ? getTweetId(article) : 'unknown';
+
+      // Get original quality URL
+      const origUrl = getOrigImageUrl(img.src);
+
+      // Ensure container is positioned
+      if (getComputedStyle(photo).position === 'static') {
+        photo.style.position = 'relative';
+      }
+
+      const ext = origUrl.includes('format=png') ? 'png' : 'jpg';
+      const idx = Array.from(photo.closest('article')?.querySelectorAll('[data-testid="tweetPhoto"]') || []).indexOf(photo);
+      const filename = `x_img_${tweetId}${idx > 0 ? '_' + (idx + 1) : ''}.${ext}`;
+
+      const btn = createDlBtn('下载图片', (b) => downloadMedia(origUrl, filename, b));
+      btn.setAttribute(DL_BTN_ATTR, 'image');
+      photo.appendChild(btn);
     }
   }
 
-  async function downloadVideo(tweetId) {
-    const url = videoUrlMap.get(tweetId);
+  function getOrigImageUrl(src) {
+    try {
+      const url = new URL(src);
+      url.searchParams.set('name', 'orig');
+      if (!url.searchParams.has('format')) {
+        url.searchParams.set('format', 'jpg');
+      }
+      return url.toString();
+    } catch {
+      return src.replace(/&name=\w+/, '&name=orig');
+    }
+  }
+
+  async function downloadMedia(url, filename, btn) {
     if (!url) return;
 
-    const btn = document.querySelector(`[${VIDEO_BTN_ATTR}="${tweetId}"]`);
     if (btn) {
       btn.classList.add('xfilter-dl-loading');
       btn.title = '下载中...';
@@ -596,7 +642,7 @@
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `x_video_${tweetId}.mp4`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -608,7 +654,7 @@
         setTimeout(() => btn.classList.remove('xfilter-dl-done'), 2000);
       }
     } catch (err) {
-      console.error('[X Focus Filter] Video download failed:', err);
+      console.error('[X Focus Filter] Download failed:', err);
       if (btn) {
         btn.classList.remove('xfilter-dl-loading');
         btn.title = '下载失败，点击重试';

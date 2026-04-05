@@ -141,7 +141,8 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
 }
 
 [data-testid="videoComponent"]:hover .xfilter-dl-btn,
-[data-testid="videoPlayer"]:hover .xfilter-dl-btn {
+[data-testid="videoPlayer"]:hover .xfilter-dl-btn,
+[data-testid="tweetPhoto"]:hover .xfilter-dl-btn {
   opacity: 1;
 }
 
