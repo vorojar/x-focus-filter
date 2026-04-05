@@ -429,6 +429,59 @@
       saveConfig();
       reprocessAll();
     });
+    makeBadgeDraggable();
+  }
+
+  function makeBadgeDraggable() {
+    let dragging = false;
+    let hasMoved = false;
+    let startX, startY, origX, origY;
+
+    // Restore saved position
+    chrome.storage.local.get('xfilter_badge_pos', (result) => {
+      if (result.xfilter_badge_pos) {
+        const { right, bottom } = result.xfilter_badge_pos;
+        badge.style.right = right + 'px';
+        badge.style.bottom = bottom + 'px';
+      }
+    });
+
+    badge.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.xfilter-badge-toggle')) return;
+      dragging = true;
+      hasMoved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = badge.getBoundingClientRect();
+      origX = window.innerWidth - rect.right;
+      origY = window.innerHeight - rect.bottom;
+      badge.style.transition = 'none';
+      badge.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+      if (!hasMoved) return;
+      const newRight = Math.max(0, origX - dx);
+      const newBottom = Math.max(0, origY - dy);
+      badge.style.right = newRight + 'px';
+      badge.style.bottom = newBottom + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      badge.style.transition = '';
+      badge.style.userSelect = '';
+      if (hasMoved) {
+        const pos = { right: parseInt(badge.style.right), bottom: parseInt(badge.style.bottom) };
+        chrome.storage.local.set({ xfilter_badge_pos: pos });
+      }
+    });
   }
 
   function updateBadge() {

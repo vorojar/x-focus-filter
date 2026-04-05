@@ -80,7 +80,7 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
   font-size: 13px;
   font-weight: 500;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(200, 140, 60, 0.08);
-  cursor: default;
+  cursor: grab;
   user-select: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
