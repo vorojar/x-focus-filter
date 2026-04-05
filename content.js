@@ -531,57 +531,7 @@
   const videoUrlMap = new Map(); // tweetId -> mp4 url
   const VIDEO_BTN_ATTR = 'data-xfilter-dl';
 
-  // Inject page-level script to intercept fetch and capture video URLs
-  function injectVideoInterceptor() {
-    const script = document.createElement('script');
-    script.textContent = `
-(function() {
-  var origFetch = window.fetch;
-  window.fetch = function() {
-    var args = arguments;
-    var url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url);
-    var result = origFetch.apply(this, args);
-    if (url && (url.includes('/TweetDetail') || url.includes('Timeline') || url.includes('/TweetResultByRestId'))) {
-      result.then(function(resp) {
-        var clone = resp.clone();
-        clone.json().then(function(data) {
-          var videos = [];
-          function dig(obj, depth) {
-            if (depth > 25 || !obj || typeof obj !== 'object') return;
-            if (obj.rest_id && obj.legacy && obj.legacy.extended_entities && obj.legacy.extended_entities.media) {
-              var media = obj.legacy.extended_entities.media;
-              for (var i = 0; i < media.length; i++) {
-                var vi = media[i].video_info;
-                if (vi && vi.variants) {
-                  var mp4s = vi.variants.filter(function(v) { return v.content_type === 'video/mp4'; });
-                  mp4s.sort(function(a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
-                  if (mp4s.length > 0) {
-                    videos.push({ tweetId: obj.rest_id, url: mp4s[0].url });
-                  }
-                }
-              }
-            }
-            var keys = Object.keys(obj);
-            for (var k = 0; k < keys.length; k++) {
-              if (typeof obj[keys[k]] === 'object') dig(obj[keys[k]], depth + 1);
-            }
-          }
-          dig(data, 0);
-          if (videos.length > 0) {
-            window.postMessage({ type: '__xfilter_videos__', videos: videos }, '*');
-          }
-        }).catch(function() {});
-      }).catch(function() {});
-    }
-    return result;
-  };
-})();
-`;
-    document.documentElement.appendChild(script);
-    script.remove();
-  }
-
-  // Listen for video URLs from the page script
+  // Listen for video URLs from the MAIN world interceptor (video-interceptor.js)
   window.addEventListener('message', (event) => {
     if (event.data?.type === '__xfilter_videos__') {
       for (const v of event.data.videos) {
@@ -673,7 +623,6 @@
 
   async function init() {
     await loadConfig();
-    injectVideoInterceptor();
     createBadge();
     processAllTweets();
     addDownloadButtons();
