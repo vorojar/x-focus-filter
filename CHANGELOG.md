@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.0] - 2026-04-11
+
+### Added
+- **移动端触屏拖动** — 浮动指示器支持 touchstart/touchmove/touchend，手机端可拖动
+- **移动端下载按钮常驻** — 触屏设备上视频/图片下载按钮始终可见（`@media (hover: none)`）
+
+### Changed
+- 拖动逻辑重构为 onDragStart/onDragMove/onDragEnd 公共函数，鼠标和触屏复用
+- 更新商店描述，涵盖视频/图片下载和移动端支持
+- Version bumped to 1.4.0
+
 ## [1.3.0] - 2026-04-05
 
 ### Added
