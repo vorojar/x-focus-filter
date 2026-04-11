@@ -446,33 +446,32 @@
       }
     });
 
-    badge.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.xfilter-badge-toggle')) return;
+    function onDragStart(clientX, clientY) {
+      if (dragging) return;
       dragging = true;
       hasMoved = false;
-      startX = e.clientX;
-      startY = e.clientY;
+      startX = clientX;
+      startY = clientY;
       const rect = badge.getBoundingClientRect();
       origX = window.innerWidth - rect.right;
       origY = window.innerHeight - rect.bottom;
       badge.style.transition = 'none';
       badge.style.userSelect = 'none';
-      e.preventDefault();
-    });
+    }
 
-    document.addEventListener('mousemove', (e) => {
+    function onDragMove(clientX, clientY) {
       if (!dragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
       if (!hasMoved) return;
       const newRight = Math.max(0, origX - dx);
       const newBottom = Math.max(0, origY - dy);
       badge.style.right = newRight + 'px';
       badge.style.bottom = newBottom + 'px';
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
+    function onDragEnd() {
       if (!dragging) return;
       dragging = false;
       badge.style.transition = '';
@@ -481,7 +480,30 @@
         const pos = { right: parseInt(badge.style.right), bottom: parseInt(badge.style.bottom) };
         chrome.storage.local.set({ xfilter_badge_pos: pos });
       }
+    }
+
+    // Mouse events
+    badge.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.xfilter-badge-toggle')) return;
+      e.preventDefault();
+      onDragStart(e.clientX, e.clientY);
     });
+    document.addEventListener('mousemove', (e) => onDragMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup', onDragEnd);
+
+    // Touch events
+    badge.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.xfilter-badge-toggle')) return;
+      const t = e.touches[0];
+      onDragStart(t.clientX, t.clientY);
+    }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      onDragMove(t.clientX, t.clientY);
+    }, { passive: false });
+    document.addEventListener('touchend', onDragEnd);
   }
 
   function updateBadge() {

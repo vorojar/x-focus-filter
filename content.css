@@ -146,6 +146,13 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
   opacity: 1;
 }
 
+/* Touch devices: always show download buttons (no hover available) */
+@media (hover: none) {
+  .xfilter-dl-btn {
+    opacity: 0.75;
+  }
+}
+
 .xfilter-dl-btn:hover {
   background: rgba(0, 0, 0, 0.85);
   transform: scale(1.1);
