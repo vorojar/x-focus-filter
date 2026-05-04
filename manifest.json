@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X Focus Filter",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Filter X/Twitter timeline to only show Tech, AI, Business & Open Source content",
   "permissions": ["storage"],
   "host_permissions": ["https://x.com/*", "https://twitter.com/*", "https://video.twimg.com/*", "https://pbs.twimg.com/*"],
