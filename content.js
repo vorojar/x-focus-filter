@@ -511,6 +511,7 @@
     const dot = badge.querySelector('.xfilter-badge-dot');
     const count = badge.querySelector('.xfilter-badge-count');
     count.textContent = stats.hidden;
+    count.style.display = (!config.enabled || stats.hidden === 0) ? 'none' : '';
     dot.classList.toggle('disabled', !config.enabled);
     dot.title = config.enabled
       ? `已过滤 ${stats.hidden} 条 (点击关闭)`
