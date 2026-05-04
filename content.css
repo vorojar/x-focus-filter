@@ -175,8 +175,13 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
 }
 
 @keyframes xfilter-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ========================================
@@ -186,7 +191,7 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
   display: flex;
   align-items: center;
   margin-left: auto;
-  padding: 0 4px;
+  padding: 0 8px;
 }
 
 .xfilter-copy-btn {
@@ -198,7 +203,7 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
   background: none;
   border: none;
   border-radius: 50%;
-  color: rgb(139, 152, 165);
+  color: rgb(83, 100, 113);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
   padding: 0;
@@ -239,4 +244,3 @@ html::-webkit-scrollbar-thumb:hover,
 [data-testid="primaryColumn"]::-webkit-scrollbar-thumb:hover {
   background: rgba(180, 140, 90, 0.35) !important;
 }
-
