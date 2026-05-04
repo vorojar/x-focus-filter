@@ -573,6 +573,7 @@
     }
     if (count > 0) updateBadge();
     addDownloadButtons();
+    addCopyButtons();
   }
 
   function startObserver() {
@@ -597,6 +598,82 @@
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // =========================================================================
+  // COPY TWEET TEXT
+  // =========================================================================
+
+  const COPY_BTN_ATTR = 'data-xfilter-copy';
+  const COPY_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const COPY_DONE_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  function getTweetTextForCopy(article) {
+    const parts = [];
+    // 用户名
+    const nameEl = article.querySelector('[data-testid="User-Name"]');
+    if (nameEl) {
+      const spans = nameEl.querySelectorAll('span');
+      const displayName = spans[0]?.textContent || '';
+      const userName = Array.from(spans).find(s => s.textContent.startsWith('@'))?.textContent || '';
+      parts.push(`${displayName} ${userName}`.trim());
+    }
+    // 正文
+    const textEl = article.querySelector('[data-testid="tweetText"]');
+    if (textEl) parts.push(textEl.textContent.trim());
+    // 卡片链接
+    const cardEl = article.querySelector('[data-testid="card.wrapper"]');
+    if (cardEl) {
+      const link = cardEl.querySelector('a[href]');
+      if (link) parts.push(link.href);
+    }
+    return parts.join('\n');
+  }
+
+  function addCopyButtons() {
+    const articles = document.querySelectorAll(`article[data-testid="tweet"]:not([${COPY_BTN_ATTR}])`);
+    for (const article of articles) {
+      const actionGroup = article.querySelector('[role="group"]');
+      if (!actionGroup) continue;
+
+      // 创建复制按钮容器，模仿 X 原生按钮样式
+      const wrapper = document.createElement('div');
+      wrapper.className = 'xfilter-copy-wrapper';
+      wrapper.setAttribute(COPY_BTN_ATTR, '1');
+
+      const btn = document.createElement('button');
+      btn.className = 'xfilter-copy-btn';
+      btn.title = '复制帖子内容';
+      btn.innerHTML = COPY_SVG;
+
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const text = getTweetTextForCopy(article);
+        if (!text) return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          // 成功反馈
+          btn.innerHTML = COPY_DONE_SVG;
+          btn.classList.add('xfilter-copy-done');
+          btn.title = '已复制';
+          setTimeout(() => {
+            btn.innerHTML = COPY_SVG;
+            btn.classList.remove('xfilter-copy-done');
+            btn.title = '复制帖子内容';
+          }, 2000);
+        } catch (err) {
+          console.error('[X Focus Filter] Copy failed:', err);
+          btn.title = '复制失败';
+          setTimeout(() => { btn.title = '复制帖子内容'; }, 2000);
+        }
+      });
+
+      wrapper.appendChild(btn);
+      actionGroup.appendChild(wrapper);
+    }
   }
 
   // =========================================================================
@@ -747,6 +824,7 @@
     createBadge();
     processAllTweets();
     addDownloadButtons();
+    addCopyButtons();
     startObserver();
     console.log('[X Focus Filter] v1.3 Initialized ✓');
   }

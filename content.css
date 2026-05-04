@@ -178,6 +178,45 @@ article[data-testid="tweet"]:not([data-xfilter-processed]) {
   to { transform: rotate(360deg); }
 }
 
+/* ========================================
+   Copy tweet text button
+   ======================================== */
+.xfilter-copy-wrapper {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 0 4px;
+}
+
+.xfilter-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: rgb(139, 152, 165);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.xfilter-copy-btn:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+  color: rgb(29, 155, 240);
+}
+
+.xfilter-copy-btn:active {
+  transform: scale(0.95);
+}
+
+.xfilter-copy-btn.xfilter-copy-done {
+  color: rgb(0, 186, 124);
+}
+
 /* ── Override X's native scrollbar to match warm theme ── */
 html::-webkit-scrollbar,
 [data-testid="primaryColumn"]::-webkit-scrollbar {
