@@ -416,14 +416,12 @@
     badge = document.createElement('div');
     badge.id = 'xfilter-badge';
     badge.innerHTML = `
-      <div class="xfilter-badge-inner">
-        <span class="xfilter-badge-icon">⚡</span>
-        <span class="xfilter-badge-text"></span>
-        <button class="xfilter-badge-toggle" title="Toggle">●</button>
+      <div class="xfilter-badge-dot" title="X Focus Filter">
+        <span class="xfilter-badge-count">0</span>
       </div>
     `;
     document.body.appendChild(badge);
-    badge.querySelector('.xfilter-badge-toggle').addEventListener('click', (e) => {
+    badge.querySelector('.xfilter-badge-dot').addEventListener('click', (e) => {
       e.stopPropagation();
       config.enabled = !config.enabled;
       saveConfig();
@@ -484,7 +482,6 @@
 
     // Mouse events
     badge.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.xfilter-badge-toggle')) return;
       e.preventDefault();
       onDragStart(e.clientX, e.clientY);
     });
@@ -493,7 +490,6 @@
 
     // Touch events
     badge.addEventListener('touchstart', (e) => {
-      if (e.target.closest('.xfilter-badge-toggle')) return;
       const t = e.touches[0];
       onDragStart(t.clientX, t.clientY);
     }, { passive: true });
@@ -512,11 +508,14 @@
       badge.style.display = 'none';
       return;
     }
-    const text = badge.querySelector('.xfilter-badge-text');
-    const toggle = badge.querySelector('.xfilter-badge-toggle');
-    text.textContent = `${stats.shown} ✓ · ${stats.hidden} ✗`;
-    toggle.style.color = config.enabled ? '#8cc63f' : '#e05a3a';
-    badge.style.display = 'flex';
+    const dot = badge.querySelector('.xfilter-badge-dot');
+    const count = badge.querySelector('.xfilter-badge-count');
+    count.textContent = stats.hidden;
+    dot.classList.toggle('disabled', !config.enabled);
+    dot.title = config.enabled
+      ? `已过滤 ${stats.hidden} 条 (点击关闭)`
+      : `过滤已关闭 (点击开启)`;
+    badge.style.display = 'block';
   }
 
   // =========================================================================
