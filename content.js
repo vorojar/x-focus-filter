@@ -633,13 +633,15 @@
   function addCopyButtons() {
     const articles = document.querySelectorAll(`article[data-testid="tweet"]:not([${COPY_BTN_ATTR}])`);
     for (const article of articles) {
-      const actionGroup = article.querySelector('[role="group"]');
+      // 只在包含回复按钮的操作栏添加（避免多个 group 重复添加）
+      const actionGroup = article.querySelector('[data-testid="reply"]')?.closest('[role="group"]');
       if (!actionGroup) continue;
+
+      article.setAttribute(COPY_BTN_ATTR, '1');
 
       // 创建复制按钮容器，模仿 X 原生按钮样式
       const wrapper = document.createElement('div');
       wrapper.className = 'xfilter-copy-wrapper';
-      wrapper.setAttribute(COPY_BTN_ATTR, '1');
 
       const btn = document.createElement('button');
       btn.className = 'xfilter-copy-btn';
