@@ -610,23 +610,31 @@
 
   function getTweetTextForCopy(article) {
     const parts = [];
-    // 用户名
-    const nameEl = article.querySelector('[data-testid="User-Name"]');
-    if (nameEl) {
-      const spans = nameEl.querySelectorAll('span');
-      const displayName = spans[0]?.textContent || '';
-      const userName = Array.from(spans).find(s => s.textContent.startsWith('@'))?.textContent || '';
-      parts.push(`${displayName} ${userName}`.trim());
-    }
-    // 正文
+
+    // 普通推文
     const textEl = article.querySelector('[data-testid="tweetText"]');
-    if (textEl) parts.push(textEl.textContent.trim());
+    if (textEl) {
+      parts.push(textEl.textContent.trim());
+    } else {
+      // 文章类型：从 longformRichTextComponent 提取
+      const richText = article.querySelector('[data-testid="longformRichTextComponent"]');
+      if (richText) {
+        const children = richText.children[0]?.children || richText.children;
+        for (const child of children) {
+          const text = child.textContent.trim();
+          if (!text) continue;
+          parts.push(child.tagName === 'BLOCKQUOTE' ? `> ${text}` : text);
+        }
+      }
+    }
+
     // 卡片链接
     const cardEl = article.querySelector('[data-testid="card.wrapper"]');
     if (cardEl) {
       const link = cardEl.querySelector('a[href]');
       if (link) parts.push(link.href);
     }
+
     return parts.join('\n');
   }
 
